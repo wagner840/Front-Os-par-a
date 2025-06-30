@@ -1,0 +1,1100 @@
+﻿O Guia do Arquiteto Sênior: Construindo um Hub de Publicação de Conteúdo de Nível Empresarial com Next.js, Supabase e n8n
+
+
+
+
+Introdução
+
+
+
+
+Missão do Projeto: Arquitetando um Centro de Controle de Frontend Escalável
+
+
+Este documento delineia o plano arquitetônico e o guia de implementação para a construção de uma aplicação frontend. No entanto, é crucial entender que o objetivo transcende a criação de um simples "frontend". Estamos arquitetando um centro de comando abrangente para um pipeline de geração de conteúdo. Esta aplicação servirá como a interface primária para gerenciar, monitorar, analisar e monetizar uma operação de publicação no WordPress, impulsionada por uma automação de backend no n8n e utilizando o Supabase como nossa camada de dados e estado. Cada decisão técnica, desde a estrutura de pastas até a escolha da biblioteca, será orientada pela necessidade de construir um ativo digital robusto, escalável e preparado para o futuro.
+
+
+Filosofia Orientadora: Construindo para Performance, Segurança e Monetização Avançada
+
+
+A filosofia que norteará este projeto se baseia em três pilares fundamentais. Cada decisão arquitetônica será rigorosamente avaliada em relação a estes princípios para garantir que o produto final não seja apenas funcional, mas um ativo de negócios de alto valor.
+1. Performance: O desempenho é um requisito não negociável. Uma experiência de usuário rápida e responsiva é fundamental para a retenção, e métricas de performance, como os Core Web Vitals (CWV), têm um impacto direto e mensurável na receita de publicidade e no ranking de SEO.1 Nossa arquitetura priorizará a renderização no lado do servidor, o carregamento otimizado de ativos e a minimização do JavaScript enviado ao cliente para garantir as melhores pontuações possíveis.
+2. Segurança: Adotaremos uma abordagem de segurança de "confiança zero" (zero-trust). Isso significa que implementaremos práticas de segurança robustas em todas as camadas da aplicação, desde a autenticação e autorização rigorosas até a proteção contra vulnerabilidades comuns da web, como Cross-Site Scripting (XSS) e Cross-Site Request Forgery (CSRF).3 A segurança não é um recurso adicional, mas a base sobre a qual construiremos.
+3. Escalabilidade e Monetização: A arquitetura será projetada para crescer junto com o negócio. Isso implica em uma estrutura de código modular e manutenível, e a implementação de estratégias de monetização que vão além do básico. Não nos limitaremos ao AdSense; projetaremos o sistema para suportar integrações avançadas como o Google Ad Manager e Header Bidding, que são padrão em operações de publicação de nível profissional.6
+
+
+Visão Estética: Realizando o Estilo "Frutiger Aero" com Ferramentas Modernas
+
+
+A visão estética solicitada é o "Frutiger Aero". Este estilo, proeminente entre 2004 e 2013, é definido por seu otimismo tecnológico, combinando elementos da natureza com interfaces digitais.9 Suas características marcantes incluem o eskeumorfismo (elementos de interface que imitam objetos do mundo real), superfícies brilhantes (glossy), translucidez (glassmorphism), gradientes suaves e uma paleta de cores vibrantes, dominada por azuis e verdes.10
+O desafio reside em recriar essa estética nostálgica sem recorrer a bibliotecas e práticas de desenvolvimento ultrapassadas, que comprometem a performance e a segurança. A nossa abordagem será utilizar o poder das ferramentas modernas para evocar essa sensação retrô. Em vez de usar bibliotecas de componentes pré-fabricadas que impõem um design minimalista e plano, utilizaremos a flexibilidade do Tailwind CSS e o poder de animação do Framer Motion para construir, a partir de primitivas de UI acessíveis, um sistema de design personalizado e de alta performance que captura a essência do Frutiger Aero.11
+________________
+
+
+Parte 1: Fundação e Arquitetura do Projeto
+
+
+Esta fase inicial é a mais crítica. As decisões arquitetônicas tomadas aqui determinarão a escalabilidade, a manutenção e o sucesso geral do projeto. É imperativo estabelecer uma fundação sólida antes que uma única linha de código funcional seja escrita. Uma arquitetura bem planejada é o que diferencia um projeto que prospera de um que se torna um fardo técnico.
+
+
+1.1. O Blueprint: Estrutura de Projeto de Nível Empresarial
+
+
+A organização do código-fonte é um reflexo direto da clareza do pensamento arquitetônico. Uma estrutura lógica e previsível acelera o desenvolvimento, facilita a integração de novos membros na equipe e reduz a probabilidade de erros.
+
+
+O Desafio do Atomic Design
+
+
+O Atomic Design, com sua hierarquia de Átomos, Moléculas, Organismos, Templates e Páginas, é um modelo mental poderoso para a construção de sistemas de design.15 No entanto, sua aplicação estrita como estrutura de pastas em projetos React complexos e de grande escala apresenta armadilhas significativas. A experiência em projetos empresariais demonstra que essa rigidez pode levar a estruturas de pastas excessivamente aninhadas, dificultando a localização de componentes relacionados. Além disso, surge uma ambiguidade sobre onde classificar componentes que encapsulam lógica de estado ou chamadas de API, mas não possuem uma representação visual direta, ou componentes "wrapper" que existem apenas para fins de desenvolvimento e não de design.17 Uma estrutura atômica pura é, frequentemente, mais adequada para uma biblioteca de componentes de design do que para a arquitetura de uma aplicação viva.
+
+
+Nossa Abordagem: Uma Arquitetura Híbrida e Orientada a Funcionalidades
+
+
+Para este projeto, adotaremos uma arquitetura mais pragmática e escalável, que combina a reutilização promovida pelo Atomic Design com os benefícios de co-localização de uma arquitetura baseada em funcionalidades (feature-based). Este modelo híbrido é uma prática comum e testada em batalha para aplicações de nível empresarial, pois equilibra a necessidade de componentes genéricos e reutilizáveis com a organização lógica do domínio do negócio.20
+A estrutura de diretórios será a seguinte:
+* src/app/: O coração do App Router do Next.js. Este diretório conterá nossa estrutura de rotas, com os arquivos page.tsx, layout.tsx e loading.tsx definindo a UI para cada segmento de URL.
+* src/components/: Este diretório abrigará nossa biblioteca de componentes de UI, organizada de forma pragmática.
+   * src/components/ui/: Aqui residirão nossos "Átomos" e "Moléculas" simples. São componentes altamente reutilizáveis e genéricos, como Button.tsx, Card.tsx, Input.tsx, Modal.tsx. Eles serão estilizados de acordo com nosso tema Frutiger Aero. Adotaremos a filosofia do Shadcn/UI: não como uma dependência, mas como uma coleção de componentes que adicionamos ao nosso projeto, dando-nos total controle sobre seu código e estilo.22
+   * src/components/features/: Esta é a nossa camada de "Organismos" e Moléculas complexas. Os componentes aqui serão agrupados por funcionalidade de negócio (ex: dashboard/, post-analytics/, monetization/, settings/). Isso garante que componentes que trabalham juntos para realizar uma função específica estejam co-localizados, melhorando drasticamente a manutenibilidade e a compreensão do código à medida que o projeto cresce.18
+* src/lib/: Para utilitários compartilhados, clientes de API e constantes. Arquivos como supabase.ts, wordpress.ts, e utils.ts viverão aqui, fornecendo uma camada de abstração para serviços externos.
+* src/hooks/: Conterá hooks React personalizados para lógica de cliente compartilhada, como use-media-query ou use-local-storage.
+* src/store/: Para nossos stores de gerenciamento de estado global do lado do cliente. Utilizaremos o Zustand para este fim.
+* src/actions/: Uma localização centralizada para todas as Server Actions do Next.js. Agrupar as ações aqui torna claro quais operações modificam o estado no servidor.
+* src/types/: Definições globais de TypeScript, como os tipos gerados a partir do nosso esquema de banco de dados Supabase.
+
+
+1.2. O Tech Stack: Selecionando Nossas Ferramentas para 2025
+
+
+A seleção de nossa pilha de tecnologia é deliberada, impulsionada pela busca de performance, pela melhor experiência de desenvolvimento (DX) e pela capacidade de executar nossa visão de UI única. Esta é uma pilha de ferramentas moderna, projetada para os desafios de 2025 e além.
+Categoria
+	Tecnologia
+	Versão
+	Justificativa
+	Framework
+	Next.js (App Router)
+	15+
+	Renderização híbrida (Server/Client Components), otimizações de performance integradas (next/image, next/font), e um ecossistema robusto. O App Router é a direção futura do desenvolvimento React.20
+	Estilização
+	Tailwind CSS
+	4+
+	Framework utility-first que oferece controle total para construir a estética Frutiger Aero sem ficar preso às opiniões de design de uma biblioteca de componentes. Altamente performático devido à purga de CSS não utilizado em tempo de compilação.6
+	Primitivas de UI
+	Radix UI (via Shadcn/UI)
+	-
+	Fornece primitivas de UI de baixo nível, sem estilo e focadas em acessibilidade. Usaremos o CLI do Shadcn/UI para adicionar e personalizar esses componentes, o que resolve o conflito central de criar um design eskeumórfico com ferramentas modernas.22
+	Animação
+	Framer Motion
+	11+
+	O padrão da indústria para animações em React. Integra-se perfeitamente com Tailwind CSS e é essencial para criar os efeitos sutis, brilhantes e interativos característicos do Frutiger Aero.14
+	Estado do Servidor
+	TanStack Query (React Query)
+	v5
+	A biblioteca definitiva para gerenciar o estado assíncrono do servidor. Lida com cache, revalidação e sincronização, o que é crucial para um dashboard pesado em dados. Será usada para todas as interações com Supabase e a API REST do WordPress.29
+	Estado do Cliente
+	Zustand
+	4+
+	Para a pequena quantidade de estado global do cliente que precisaremos (ex: toggles de UI, estado da sessão), Zustand é uma solução leve, sem opiniões e performática que evita o boilerplate do Redux ou as complexidades do Context para estado global.32 Combina perfeitamente com TanStack Query.35
+	Visualização de Dados
+	Nivo
+	0.87+
+	Escolhida por sua estética superior, alta customização e excelente suporte para Server-Side Rendering (SSR) com React, crucial para renderizar visualizações de gráficos iniciais no servidor para melhor performance percebida.37
+	Tabelas de Dados
+	TanStack Table (React Table)
+	v8
+	Uma biblioteca headless e altamente flexível para construir tabelas de dados poderosas. Sua natureza headless significa que podemos aplicar nosso estilo Frutiger Aero personalizado sem problemas. Será configurada para paginação, ordenação e filtragem no lado do servidor.39
+	Formulários Dinâmicos
+	React-jsonschema-form (RJSF)
+	v5
+	Para páginas de configurações, RJSF nos permite gerar formulários dinamicamente a partir de um esquema JSON. Esta é uma abordagem altamente escalável, pois novas configurações podem ser adicionadas apenas atualizando um objeto JSON, sem escrever novo código de formulário.42
+	
+
+1.3. Configuração Inicial do Projeto
+
+
+Com a arquitetura e o stack definidos, a IA deve executar os seguintes passos para inicializar o ambiente de desenvolvimento.
+Passo 1: Criar a Aplicação Next.js
+Execute o comando create-next-app com a versão mais recente, incluindo as predefinições para TypeScript, Tailwind CSS e ESLint.20
+
+
+Bash
+
+
+
+
+npx create-next-app@latest wordpress-publisher-hub --typescript --tailwind --eslint
+
+Passo 2: Instalar as Dependências Principais
+Instale todas as bibliotecas necessárias para a nossa pilha de tecnologia.
+
+
+Bash
+
+
+
+
+npm install @supabase/ssr @tanstack/react-query @tanstack/react-table zustand @nivo/core @nivo/bar @nivo/line framer-motion @radix-ui/react-icons react-jsonschema-form @rjsf/core @rjsf/validator-ajv8
+
+Passo 3: Configurar o Shadcn/UI
+Inicialize o Shadcn/UI. Este passo não instala uma biblioteca, mas configura o tailwind.config.ts e as variáveis CSS globais, preparando o projeto para a adição de componentes primitivos.28
+
+
+Bash
+
+
+
+
+npx shadcn-ui@latest init
+
+A IA deve seguir as instruções, confirmando as configurações padrão, que alinham-se com nossa estrutura de projeto.
+Passo 4: Variáveis de Ambiente
+Crie um arquivo .env.local na raiz do projeto para armazenar de forma segura todos os segredos. Este arquivo é ignorado pelo Git por padrão no Next.js. Defina todas as variáveis necessárias agora, para serem preenchidas posteriormente.45
+
+
+Snippet de código
+
+
+
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY= # Usado para operações no lado do servidor, se necessário
+
+# WordPress
+WORDPRESS_API_URL=
+WORDPRESS_APP_PASSWORD_USER=
+WORDPRESS_APP_PASSWORD=
+
+# Monetização & APIs Externas
+NEXT_PUBLIC_GOOGLE_ADSENSE_ID=
+NEXT_PUBLIC_GOOGLE_AD_MANAGER_ID=
+SEMRUSH_API_KEY=
+AHREFS_API_KEY=
+
+# Autenticação
+AUTH_SECRET= # Gerar com `openssl rand -base64 32`
+
+Passo 5: Configuração do TypeScript
+Configure o arquivo tsconfig.json para incluir aliases de caminho (@/*) para importações mais limpas. Esta é uma prática padrão em projetos de grande escala para melhorar a legibilidade e a manutenibilidade.47
+
+
+JSON
+
+
+
+
+// tsconfig.json
+{
+ "compilerOptions": {
+   //... outras opções
+   "baseUrl": ".",
+   "paths": {
+     "@/*": ["./src/*"]
+   }
+ },
+ "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+ "exclude": ["node_modules"]
+}
+
+Com esta fundação estabelecida, o projeto está pronto para as integrações principais e o desenvolvimento das funcionalidades.
+________________
+
+
+Parte 2: Integrações Principais e Autenticação
+
+
+Com a estrutura do projeto estabelecida, o próximo passo é conectar a aplicação aos seus serviços externos fundamentais: Supabase, para nossos dados e autenticação, e WordPress, para o conteúdo que estamos gerenciando. A segurança é o princípio orientador nesta fase; cada conexão deve ser estabelecida de forma robusta e segura.
+
+
+2.1. Configuração do Cliente Supabase
+
+
+A interação com o Supabase em um ambiente Next.js moderno, que utiliza Server Components, exige uma abordagem cuidadosa para o gerenciamento de sessões.
+
+
+A Abordagem Moderna: @supabase/ssr
+
+
+A biblioteca oficial @supabase/ssr foi projetada especificamente para ambientes de renderização no lado do servidor, como o App Router do Next.js. Ela gerencia a sessão do usuário através de cookies, o que é essencial para autenticar requisições em Server Components, Server Actions e API Route Handlers. Esta biblioteca abstrai a complexidade de ler, escrever e atualizar cookies de sessão de forma segura.49
+
+
+Criando Clientes Supabase
+
+
+É crucial criar clientes Supabase distintos para diferentes contextos de execução (cliente, servidor, middleware) para garantir o correto manuseio dos cookies e da sessão.47 Organizaremos isso em
+src/lib/supabase/.
+* utils/supabase/client.ts: Este arquivo criará um cliente Supabase singleton para ser usado exclusivamente em Client Components. Ele opera no navegador e não tem acesso direto aos cookies do servidor.
+TypeScript
+// src/utils/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr'
+
+export function createClient() {
+ return createBrowserClient(
+   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+ )
+}
+
+* utils/supabase/server.ts: Este arquivo exportará uma função para criar um cliente Supabase para uso em Server Components e Server Actions. Ele requer o objeto cookies de next/headers para ler a sessão do usuário a partir da requisição recebida.
+TypeScript
+// src/utils/supabase/server.ts
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+export function createClient() {
+ const cookieStore = cookies()
+
+ return createServerClient(
+   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+   {
+     cookies: {
+       get(name: string) {
+         return cookieStore.get(name)?.value
+       },
+       set(name: string, value: string, options: CookieOptions) {
+         cookieStore.set({ name, value,...options })
+       },
+       remove(name: string, options: CookieOptions) {
+         cookieStore.set({ name, value: '',...options })
+       },
+     },
+   }
+ )
+}
+
+* middleware.ts: O middleware do Next.js é o local ideal para gerenciar a atualização da sessão. Ele intercepta as requisições antes que cheguem às páginas e pode atualizar o token de autenticação do usuário se ele estiver expirado, garantindo que a sessão permaneça válida durante a navegação.49
+TypeScript
+// src/middleware.ts
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function middleware(request: NextRequest) {
+ let response = NextResponse.next({
+   request: {
+     headers: request.headers,
+   },
+ })
+
+ const supabase = createServerClient(
+   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+   {
+     cookies: {
+       get(name: string) {
+         return request.cookies.get(name)?.value
+       },
+       set(name: string, value: string, options: CookieOptions) {
+         request.cookies.set({ name, value,...options })
+         response = NextResponse.next({
+           request: { headers: request.headers },
+         })
+         response.cookies.set({ name, value,...options })
+       },
+       remove(name: string, options: CookieOptions) {
+         request.cookies.set({ name, value: '',...options })
+         response = NextResponse.next({
+           request: { headers: request.headers },
+         })
+         response.cookies.set({ name, value: '',...options })
+       },
+     },
+   }
+ )
+
+ await supabase.auth.getUser()
+
+ return response
+}
+
+export const config = {
+ matcher: [
+   /*
+    * Match all request paths except for the ones starting with:
+    * - _next/static (static files)
+    * - _next/image (image optimization files)
+    * - favicon.ico (favicon file)
+    * Feel free to modify this pattern to include more paths.
+    */
+   '/((?!_next/static|_next/image|favicon.ico).*)',
+ ],
+}
+
+
+
+2.2. Autenticação de Usuário e Gerenciamento de Sessão
+
+
+
+
+Fluxo de Login
+
+
+Criaremos uma página de login em src/app/login/page.tsx. Para acelerar o desenvolvimento e garantir a segurança, utilizaremos a biblioteca @supabase/auth-ui-react, que fornece componentes de UI pré-construídos para autenticação. Estilizaremos esses componentes para se alinharem à nossa estética Frutiger Aero.50 A submissão do formulário invocará uma Server Action para processar o login de forma segura.
+
+
+Server Actions Seguras
+
+
+A lógica de login residirá em src/actions/auth.ts. A Server Action receberá os dados do formulário (email e senha), chamará o método signInWithPassword do cliente Supabase do servidor e tratará os estados de sucesso ou erro. Como as Server Actions são executadas exclusivamente no servidor, as credenciais do usuário nunca são expostas ao navegador, o que constitui uma prática de segurança fundamental.51
+
+
+Protegendo Rotas
+
+
+A proteção de rotas e dados é uma responsabilidade do servidor. Utilizaremos o cliente Supabase do lado do servidor em nossos layouts e páginas para buscar a sessão do usuário.
+Uma distinção crítica de segurança deve ser feita aqui. O método getSession() lê a sessão a partir do cookie armazenado no navegador. Como os cookies podem ser manipulados por um usuário mal-intencionado, confiar apenas em getSession() para verificações de autorização no servidor é inseguro.49 O método correto e seguro para verificar a identidade de um usuário no servidor é
+getUser(). Esta função faz uma chamada de servidor para servidor para a API do Supabase, validando o JWT (JSON Web Token) do cookie contra o serviço de autenticação. Esta é a verificação autoritativa.53
+Portanto, toda a lógica protegida do lado do servidor (em layouts, páginas e Server Actions) deve usar o seguinte padrão para obter o usuário atual e verificar sua existência antes de prosseguir:
+
+
+TypeScript
+
+
+
+
+// Exemplo em uma Server Component ou Server Action
+import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
+
+const supabase = createClient()
+const { data: { user } } = await supabase.auth.getUser()
+
+if (!user) {
+ redirect('/login')
+}
+// Se o usuário existir, prossiga com a lógica protegida.
+
+
+
+Row-Level Security (RLS)
+
+
+A segurança no nível da aplicação não é suficiente. A fonte final da verdade para o controle de acesso aos dados deve residir no banco de dados. Habilitaremos a Row-Level Security (RLS) em todas as tabelas sensíveis no Supabase. A RLS garante que, mesmo que uma consulta à API seja construída incorretamente na aplicação, o banco de dados em si impedirá o acesso não autorizado aos dados.3
+
+
+Nome da Política
+	Descrição
+	Implementação SQL
+	Usuários podem ver apenas seu próprio perfil
+	Garante que um usuário autenticado só possa ler os dados de sua própria linha na tabela profiles.
+	CREATE POLICY "User can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+	Usuários podem atualizar apenas sua própria fila de posts
+	Permite que um usuário modifique apenas as entradas na tabela posts_queue que estão associadas ao seu user_id.
+	CREATE POLICY "User can update own posts" ON posts_queue FOR UPDATE USING (auth.uid() = user_id);
+	Permitir acesso de leitura a dados públicos
+	Permite que qualquer usuário (autenticado ou anônimo) leia dados de uma tabela pública, como public_configurations.
+	CREATE POLICY "Allow read access to public data" ON public_configurations FOR SELECT USING (true);
+	
+
+2.3. Integração com a API REST do WordPress
+
+
+
+
+Método de Autenticação: Application Passwords
+
+
+Para conectar-se de forma segura à API REST do site WordPress, utilizaremos as Application Passwords. Esta é a abordagem moderna e recomendada, pois evita a exposição da senha principal do usuário do WordPress e permite que o acesso seja revogado por aplicação, sem afetar o login do usuário.56 O nome de usuário e a senha da aplicação gerada serão armazenados de forma segura em nosso arquivo
+.env.local.
+
+
+Wrapper do Cliente de API
+
+
+Em src/lib/wordpress.ts, criaremos um wrapper de cliente simples usando fetch. Este wrapper será responsável por adicionar o cabeçalho Authorization a cada requisição, contendo as credenciais codificadas em Base64.
+
+
+TypeScript
+
+
+
+
+// src/lib/wordpress.ts
+const WP_API_URL = process.env.WORDPRESS_API_URL;
+const WP_USER = process.env.WORDPRESS_APP_PASSWORD_USER;
+const WP_PASSWORD = process.env.WORDPRESS_APP_PASSWORD;
+
+const credentials = Buffer.from(`${WP_USER}:${WP_PASSWORD}`).toString('base64');
+
+async function fetchWordPress<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+ const headers = new Headers(options.headers);
+ headers.set('Authorization', `Basic ${credentials}`);
+
+ const response = await fetch(`${WP_API_URL}${endpoint}`, {
+  ...options,
+   headers,
+ });
+
+ if (!response.ok) {
+   throw new Error(`WordPress API request failed: ${response.statusText}`);
+ }
+
+ return response.json() as T;
+}
+
+export { fetchWordPress };
+
+
+
+Busca de Dados
+
+
+Este cliente será utilizado em Server Components e Server Actions para buscar dados do WordPress, como métricas de desempenho de posts, comentários e dados de usuários, para exibição em nosso painel. Utilizaremos os endpoints padrão /wp-json/wp/v2/ para essas operações.59
+________________
+
+
+Parte 3: Construindo a UI "Frutiger Aero"
+
+
+Esta seção traduz nossa visão estética em um sistema de design tangível e reutilizável. O objetivo é instruir a IA sobre como criar sistematicamente componentes que sejam visualmente nostálgicos e tecnicamente modernos, resolvendo o principal desafio de design do projeto.
+
+
+3.1. Desconstruindo a Estética Frutiger Aero
+
+
+Para recriar a estética, primeiro devemos definir seus princípios visuais fundamentais, com base na pesquisa histórica e de design.
+   1. Glassmorphism e Translucidez: O efeito de "vidro fosco" é central. Isso será alcançado com a classe backdrop-blur do Tailwind CSS, combinada com fundos semitransparentes (por exemplo, bg-white/30 ou bg-black/20). A chave é criar uma sensação de profundidade e camadas, onde os elementos de fundo são visíveis, mas desfocados.11
+   2. Brilho e Lustre (Gloss & Sheen): Um brilho tridimensional em elementos interativos é uma marca registrada. Isso será criado usando gradientes lineares sutis (de uma cor clara para uma ligeiramente mais escura) e sombras internas (inner shadow) para simular a reflexão da luz. Para botões e elementos chave, usaremos o Framer Motion para animar um efeito de "brilho" que percorre o componente no hover, dando-lhe uma aparência dinâmica e polida.14
+   3. Eskeumorfismo e Profundidade: Os elementos devem parecer tangíveis. Isso envolve o uso cuidadoso da propriedade box-shadow para criar profundidade. Botões parecerão saltar da tela (convexos), enquanto campos de entrada parecerão pressionados para dentro (côncavos), usando uma combinação de sombras claras e escuras para simular a luz e a sombra.61
+   4. Paleta de Cores: A estética é dominada por azuis e verdes vibrantes, frequentemente sobrepostos a imagens da natureza, como campos gramados, gotas d'água, auroras e céus limpos. Nossa paleta de cores refletirá essa sensibilidade otimista.9
+   5. Tipografia: Embora o nome seja derivado da fonte Frutiger, a estética é mais sobre clareza, legibilidade e um toque de humanismo. Usaremos uma fonte sans-serif limpa e moderna, otimizada para a web através do next/font, para garantir excelente performance de renderização e evitar mudanças de layout.6
+
+
+Configuração do Tailwind
+
+
+Instruiremos a IA a estender o arquivo tailwind.config.ts para incluir nossos tokens de design Frutiger Aero personalizados. Isso cria uma fonte única de verdade para todo o estilo, garantindo consistência e facilitando a tematização da aplicação.
+
+
+Tipo de Token
+	Nome do Token
+	Valor de Exemplo
+	Descrição
+	colors
+	aero-blue-light
+	#78c1f3
+	Azul claro e vibrante para gradientes e destaques.
+	
+
+	aero-blue-dark
+	#4a90e2
+	Azul mais profundo para a base de botões e elementos.
+	
+
+	aero-green
+	#7ed321
+	Verde brilhante para ícones de sucesso e elementos positivos.
+	boxShadow
+	glossy-button
+	inset 0 1px 1px rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.2)
+	Sombra composta para dar ao botão uma aparência convexa e brilhante.
+	
+
+	inset-input
+	inset 0 2px 4px rgba(0,0,0,0.2)
+	Sombra interna para fazer os campos de entrada parecerem côncavos.
+	borderRadius
+	soft
+	0.75rem
+	Bordas arredondadas suaves, uma característica chave do estilo.
+	backgroundImage
+	aurora-gradient
+	linear-gradient(to top right, #4a90e2, #78c1f3, #7ed321)
+	Gradiente de fundo inspirado em auroras para painéis e cards.
+	
+
+3.2. Criando Componentes Atômicos
+
+
+Esta é a fase em que a IA fará o trabalho pesado de construção da UI. Para cada elemento central, forneceremos um prompt detalhado que combina funcionalidade, acessibilidade e estética.
+Exemplo de Prompt para um Botão Brilhante:
+"Crie um componente React Button.tsx em src/components/ui/. Ele deve utilizar o Slot do Radix UI para composição, permitindo que seja usado com ícones ou como um wrapper para outros componentes como next/link. Estilize-o com Tailwind CSS usando nossos tokens de design. O botão deve ter um gradiente de fundo bg-gradient-to-b de aero-blue-light para aero-blue-dark, um borderRadius de soft e uma sombra glossy-button. Ao passar o mouse, use o whileHover do Framer Motion para aumentar ligeiramente sua escala e brilho. Adicione uma motion.div interna que anima um 'brilho' branco e semitransparente através do botão da esquerda para a direita no hover, criando um efeito lustroso.60"
+Exemplo de Prompt para um Card de Vidro:
+"Crie um componente Card.tsx em src/components/ui/. Ele deve ter um fundo semitransparente (ex: bg-neutral-800/30 para o modo escuro 65) e um efeito
+backdrop-blur-lg.12 Adicione uma borda branca sutil (
+border border-white/20) e um borderRadius de soft para completar o efeito de vidro."
+Este processo será repetido para inputs, modais, tooltips e outros elementos atômicos, construindo progressivamente nossa biblioteca de componentes personalizados.
+
+
+3.3. Montando o Layout do Dashboard
+
+
+Com nossos componentes atômicos criados, agora montaremos o layout principal da aplicação.
+   * src/app/layout.tsx: Este será um Server Component que configura a estrutura HTML raiz. Ele incluirá a otimização de fontes com next/font e envolverá a aplicação com nossos provedores globais, como o QueryProvider para TanStack Query.
+   * src/components/features/shell/DashboardShell.tsx: Criaremos um componente de "casca" (shell). Este será um Client Component que define a UI persistente: uma barra lateral principal para navegação e um cabeçalho. O shell usará nossos componentes Card de vidro como base para seus painéis, criando uma aparência coesa.
+   * Este DashboardShell envolverá a prop {children}, permitindo-nos aninhar nossas páginas renderizadas no servidor dentro deste layout do lado do cliente. Este é um padrão chave e poderoso no App Router, que combina o melhor da renderização do servidor com a interatividade do cliente.66
+________________
+
+
+Parte 4: O Dashboard de Análise e Controle
+
+
+Esta seção foca em dar vida à aplicação, buscando, exibindo e interagindo com os dados. Estabeleceremos padrões robustos de fluxo de dados e construiremos as funcionalidades centrais do painel de controle.
+
+
+4.1. Estratégia de Busca de Dados com TanStack Query
+
+
+A forma como gerenciamos os dados é fundamental para a performance e a experiência do usuário.
+
+
+Filosofia: Primeiro no Servidor
+
+
+O App Router do Next.js incentiva a busca de dados no servidor sempre que possível. Isso melhora a performance inicial da página (LCP), reduz a quantidade de JavaScript enviada ao cliente e mantém segredos, como chaves de API, seguros no servidor.66 Nossa arquitetura abraçará totalmente este princípio.
+
+
+O Padrão de Hidratação
+
+
+Esta é a maneira canônica e mais eficiente de usar TanStack Query com Server Components no App Router.30 O fluxo é o seguinte:
+   1. Pré-busca no Servidor: Em um Server Component (por exemplo, src/app/dashboard/page.tsx), criaremos uma instância do QueryClient e usaremos prefetchQuery para buscar os dados iniciais necessários para a página.
+   2. Desidratação: Em seguida, "desidratamos" o cache deste cliente. A desidratação serializa os dados do cache em um formato que pode ser passado para o cliente.
+   3. Limite de Hidratação: Passamos o estado desidratado como uma prop para um componente especial <HydrationBoundary>.
+   4. Hidratação no Cliente: Dentro desta fronteira, renderizamos um Client Component que usa o hook useQuery com a mesma chave de consulta (queryKey) usada na pré-busca.
+   5. Mágica do TanStack Query: O TanStack Query no cliente detecta o estado desidratado e "hidrata" seu cache com ele. O resultado é que os dados estão disponíveis instantaneamente no cliente, sem a necessidade de uma busca de dados do lado do cliente no carregamento inicial. Ao mesmo tempo, mantemos todos os benefícios do TanStack Query, como cache, revalidação em segundo plano e gerenciamento de estado da query.30
+
+
+Configuração do Provedor
+
+
+Criaremos um QueryProvider.tsx como um Client Component. Este componente será responsável por inicializar o QueryClient no lado do cliente e envolver toda a nossa aplicação no layout.tsx, disponibilizando o cliente de consulta para todos os componentes filhos.29
+
+
+4.2. Construindo a Visão Principal do Dashboard
+
+
+A página principal do dashboard (src/app/dashboard/page.tsx) será um Server Component. Ele será responsável por buscar dados agregados do Supabase, como o número total de posts gerados, taxas de sucesso/falha e outras métricas chave. Esses dados serão então passados como props para Client Components que cuidarão da visualização.
+   * KPI Cards: Criaremos um componente KpiCard.tsx que utiliza nosso Card Frutiger Aero. Ele exibirá uma única métrica (ex: "Posts Publicados este Mês") acompanhada de um pequeno gráfico de linha (sparkline) da biblioteca Nivo, para dar um contexto visual rápido.68
+   * Gráficos Principais: Usaremos os componentes de Gráfico de Barras e Gráfico de Linha do Nivo para visualizar tendências ao longo do tempo (ex: posts gerados por semana, taxa de sucesso por categoria). Estes serão Client Components interativos, hidratados com os dados iniciais do servidor. A escolha do Nivo é estratégica devido à sua estética superior, amplas opções de customização e excelente suporte a SSR, que se encaixam perfeitamente em nosso design personalizado.37
+
+
+4.3. Tabelas de Dados Avançadas com TanStack Table
+
+
+Criaremos uma página de gerenciamento para a posts_queue em src/app/posts/page.tsx. Esta página exibirá um grande conjunto de dados da nossa tabela Supabase correspondente.
+
+
+Operações no Lado do Servidor
+
+
+Para garantir a performance com grandes volumes de dados, todas as operações de paginação, ordenação e filtragem serão tratadas no lado do servidor. Carregar milhares de linhas para o cliente para então paginar ou filtrar seria extremamente ineficiente.41
+
+
+Implementação
+
+
+   1. O componente da tabela (um Client Component) gerenciará o estado para paginação (pageIndex, pageSize), ordenação (sorting) e filtros (columnFilters).71
+   2. Sempre que um desses estados mudar (por exemplo, o usuário clica na próxima página ou digita em um filtro de coluna), um hook useQuery será acionado com os novos parâmetros.
+   3. A função de consulta (queryFn) deste hook invocará uma Server Action.
+   4. A Server Action receberá o estado de paginação/ordenação/filtragem, construirá uma query Supabase dinâmica usando modificadores como .range(), .order() e .like(), executará a consulta e retornará os dados paginados juntamente com a contagem total de linhas.
+   5. As flags manualPagination, manualSorting e manualFiltering do TanStack Table serão definidas como true, informando à biblioteca que não deve tentar realizar essas operações no cliente.71
+
+
+Estilização
+
+
+Como o TanStack Table é "headless" (sem estilo), criaremos componentes <table>, <th>, <tr>, <td> personalizados e estilizados com nosso tema Frutiger Aero. Isso incluirá cabeçalhos de tabela brilhantes, linhas translúcidas e interações de hover sutis.
+
+
+4.4. Atualizações em Tempo Real com Supabase Realtime
+
+
+Para que o dashboard pareça vivo e reativo, usaremos o Supabase Realtime para ouvir as mudanças no banco de dados em tempo real.
+
+
+Implementação
+
+
+Em nosso principal Client Component do dashboard, usaremos um hook useEffect para nos inscrevermos nas mudanças da tabela posts_queue.74
+
+
+JavaScript
+
+
+
+
+// Dentro de um Client Component do dashboard
+const queryClient = useQueryClient(); // Obtém a instância do QueryClient
+
+useEffect(() => {
+ const channel = supabase
+  .channel('posts-queue-changes')
+  .on(
+     'postgres_changes',
+     { event: '*', schema: 'public', table: 'posts_queue' },
+     (payload) => {
+       console.log('Change received!', payload);
+       // A melhor prática: invalidar as queries relevantes.
+       // O TanStack Query cuidará de refazer a busca de forma otimizada.
+       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+       queryClient.invalidateQueries({ queryKey: ['posts-queue'] });
+     }
+   )
+  .subscribe();
+
+ // Função de limpeza para remover a inscrição quando o componente for desmontado
+ return () => {
+   supabase.removeChannel(channel);
+ };
+}, [queryClient, supabase]);
+
+A abordagem mais robusta e alinhada com nossa arquitetura não é atualizar manualmente o estado do cliente ao receber um evento em tempo real. Em vez disso, a melhor prática ao usar o TanStack Query é simplesmente invalidar a query relevante. Isso informa ao TanStack Query que os dados em seu cache estão obsoletos. A biblioteca então lidará automaticamente com a revalidação dos dados da maneira mais eficiente possível (respeitando staleTime, refetchOnWindowFocus, etc.), garantindo que a UI esteja sempre sincronizada com o estado do servidor. Isso desacopla a lógica de tempo real da lógica de atualização de estado, resultando em um código mais limpo e resiliente.
+________________
+
+
+Parte 5: Integração Profunda e Recursos Avançados
+
+
+Nesta seção, construiremos as funcionalidades de "power user" que fornecem controle profundo e capacidades de análise, aproveitando todo o poder do nosso backend e de serviços externos. Estas são as funcionalidades que diferenciam uma ferramenta simples de uma plataforma de gerenciamento profissional.
+
+
+5.1. Aproveitando Funções Postgres com RPC
+
+
+
+
+Caso de Uso: Busca por Palavras Duplicadas
+
+
+A solicitação para uma "busca de palavras duplicadas" é um exemplo perfeito de uma operação que seria extremamente ineficiente se realizada no cliente. Buscar todo o conteúdo de todos os posts para o navegador para análise consumiria uma quantidade proibitiva de largura de banda e memória. A solução correta é executar essa lógica complexa diretamente no servidor de banco de dados.
+
+
+Função Postgres (find_duplicate_keywords)
+
+
+Definiremos uma função em PL/pgSQL diretamente no Editor SQL do Supabase. Esta função aceitará um post_id como argumento, irá tokenizar (dividir em palavras) o conteúdo desse post e, em seguida, comparará as frequências de palavras-chave com todos os outros posts na base de dados. O resultado será um objeto JSON contendo as palavras-chave duplicadas e suas contagens, que será retornado pela função.
+
+
+Chamada RPC do Supabase
+
+
+Do frontend, a interação será feita através de uma Server Action que chama esta função Postgres usando o método rpc() do Supabase. Este método permite a execução de "Remote Procedure Calls" (Chamadas de Procedimento Remoto). É uma abordagem segura e altamente performática, pois toda a lógica complexa é executada no servidor de banco de dados, e apenas o resultado final é transferido pela rede.76
+
+
+JavaScript
+
+
+
+
+// Exemplo dentro de uma Server Action em src/actions/content.ts
+'use server'
+import { createClient } from '@/utils/supabase/server'
+
+export async function analyzeDuplicateKeywords(postId: number) {
+ const supabase = createClient()
+ const { data, error } = await supabase.rpc('find_duplicate_keywords', { 
+   post_id_to_check: postId 
+ });
+
+ if (error) {
+   console.error('RPC Error:', error);
+   return { error: 'Failed to analyze duplicates.' };
+ }
+
+ return { data };
+}
+
+
+
+Segurança da Função
+
+
+É crucial que a função Postgres seja definida com security invoker (que é o padrão). Isso garante que a função seja executada com as permissões do usuário que a está chamando, respeitando assim todas as políticas de Row-Level Security (RLS) aplicáveis. Além disso, o uso do método rpc() do Supabase previne injeção de SQL por design, pois os argumentos são passados como parâmetros e não por concatenação de strings.3
+
+
+5.2. Análise de Conteúdo On-the-Fly com NLP
+
+
+
+
+Objetivo
+
+
+Fornecer feedback em tempo real sobre a qualidade do conteúdo diretamente na interface do usuário, como pontuações de legibilidade e densidade de palavras-chave, antes mesmo de um post ser enviado para a fila de geração.
+
+
+Seleção da Biblioteca
+
+
+Para esta tarefa, utilizaremos a wink-nlp. É uma biblioteca de Processamento de Linguagem Natural (NLP) leve, sem dependências externas e compatível com o navegador, com excelente performance.80 Ela inclui funcionalidades para tokenização, análise de frequência (para densidade de palavras-chave) e pode calcular pontuações de legibilidade como o Flesch Reading Ease, que é um padrão da indústria.80
+
+
+Implementação
+
+
+No nosso componente de edição de post (um Client Component), criaremos um hook useMemo que executa a análise do wink-nlp sempre que o conteúdo do post for alterado. Os resultados (densidade de palavras-chave para o foco principal, pontuação de legibilidade) serão exibidos ao usuário em tempo real. Isso fornece um feedback imediato e acionável para o criador de conteúdo, ajudando a otimizar o texto para os padrões desejados.
+
+
+5.3. Enriquecimento de Dados Externos via Padrão BFF
+
+
+
+
+Objetivo
+
+
+Enriquecer nossa análise de conteúdo com dados de SEO profissionais de uma API externa, como a da Semrush ou Ahrefs.
+
+
+O Padrão Backend-for-Frontend (BFF)
+
+
+Nunca faremos chamadas para a API da Semrush diretamente do cliente. Fazer isso exporia nossa chave de API secreta, um risco de segurança inaceitável. Em vez disso, usaremos uma Server Action do Next.js como um proxy seguro. Esta é uma implementação clássica do padrão Backend-for-Frontend (BFF), onde o backend do Next.js atua como uma fachada para serviços externos.82
+
+
+Implementação
+
+
+   1. Um Client Component permitirá que o usuário insira uma palavra-chave para análise.
+   2. Na submissão, ele invocará uma Server Action chamada getSemrushKeywordData.
+   3. A Server Action, executando-se de forma segura no servidor, recuperará a SEMRUSH_API_KEY das variáveis de ambiente.
+   4. Ela então fará uma chamada fetch para a API da Semrush (por exemplo, o endpoint de Visão Geral de Palavra-Chave 85).
+   5. A ação irá processar a resposta e retornar apenas os dados relevantes (ex: volume de busca, CPC, dificuldade) para o cliente. Todo este processo protege a chave de API, que nunca sai do ambiente do servidor.51
+
+
+Funcionalidade
+	Endpoint/Função
+	Método
+	Autenticação
+	Descrição
+	Buscar Posts na Fila
+	Tabela posts_queue
+	SELECT
+	Supabase JWT (via RLS)
+	Recupera a lista de posts para exibição na tabela de dados.
+	Analisar Duplicatas
+	rpc('find_duplicate_keywords')
+	POST
+	Supabase JWT (via RLS)
+	Executa a função Postgres para encontrar palavras-chave duplicadas.
+	Obter Métricas de SEO
+	actions/getSemrushKeywordData
+	Server Action
+	Chave de API da Semrush (no servidor)
+	Atua como um BFF para buscar dados da API da Semrush de forma segura.
+	Conectar ao WordPress
+	/wp-json/wp/v2/posts
+	GET
+	WordPress Application Password
+	Busca dados de posts publicados diretamente do WordPress.
+	
+
+5.4. Geração Dinâmica de Formulários para Configurações
+
+
+
+
+Caso de Uso
+
+
+A aplicação terá várias configurações (ex: URLs de webhook do n8n, chaves de API para outros serviços, parâmetros de geração de conteúdo). Codificar formulários para cada uma dessas configurações é frágil e não escalável.
+
+
+Solução: react-jsonschema-form (RJSF)
+
+
+Definiremos a estrutura de nossas configurações em um arquivo settings.schema.json. A biblioteca RJSF consumirá este esquema e renderizará automaticamente um formulário completo, com validação de dados integrada, baseada no esquema.42
+
+
+Customização
+
+
+O RJSF é altamente personalizável. Criaremos componentes FieldTemplate e Widget personalizados para garantir que os elementos do formulário gerado correspondam à nossa estética Frutiger Aero.87 Por exemplo, nosso widget de texto personalizado usará nosso componente
+Input brilhante e embutido.
+
+
+Fluxo de Dados
+
+
+A página de configurações buscará o JSON de configurações atual de uma tabela no Supabase. Este JSON será passado como a prop formData para o componente Form do RJSF. Na submissão, uma Server Action será usada para validar e atualizar o objeto JSON no banco de dados. Esta abordagem permite adicionar ou remover configurações complexas na aplicação simplesmente modificando um arquivo de esquema JSON, sem a necessidade de escrever uma única linha de código de formulário.
+________________
+
+
+Parte 6: Monetização e Poderes de Editor
+
+
+Esta seção aborda diretamente os objetivos de negócio do usuário, transformando a aplicação de uma simples ferramenta em uma plataforma para o crescimento da receita e gestão estratégica de conteúdo. O foco aqui é implementar soluções de publicidade de nível profissional, otimizadas para o ecossistema moderno da web.
+
+
+6.1. Integrando Google AdSense e Ad Manager
+
+
+A implementação de anúncios em uma aplicação de página única (SPA), como as construídas com Next.js, apresenta desafios únicos que devem ser resolvidos para garantir tanto a receita quanto uma boa experiência do usuário.
+
+
+O Desafio dos Core Web Vitals
+
+
+O maior obstáculo técnico é o Cumulative Layout Shift (CLS). O CLS ocorre quando os anúncios são carregados de forma assíncrona e, por não terem um espaço reservado, empurram o conteúdo da página para baixo, causando um "salto" visual. Isso cria uma péssima experiência para o usuário e prejudica severamente as pontuações dos Core Web Vitals, o que, por sua vez, afeta negativamente o ranking no Google e a receita de anúncios.1
+
+
+Nossa Estratégia à Prova de CLS
+
+
+   1. Slots de Anúncio com Tamanho Fixo: Cada contêiner de anúncio em nosso código terá uma width e height fixas definidas via CSS. Essas dimensões devem corresponder exatamente ao tamanho do bloco de anúncios configurado no Google Ad Manager. Isso reserva o espaço na página antes mesmo do anúncio ser carregado, eliminando completamente o layout shift causado por ele.
+   2. O Componente next/script: O script principal do AdSense/Google Publisher Tag (GPT) será carregado usando o componente <Script> do Next.js com a estratégia strategy="lazyOnload" no layout raiz. Isso impede que o script de anúncios bloqueie a renderização inicial da página, melhorando o LCP (Largest Contentful Paint).91
+   3. Componente de Anúncio Personalizado: Criaremos um Client Component AdBanner.tsx. Este componente conterá a tag <ins> para o bloco de anúncios. Crucialmente, ele usará um hook useEffect para chamar (window.adsbygoogle = window.adsbygoogle ||).push({});. Este hook será configurado para ser re-executado em mudanças de rota (por exemplo, usando o usePathname do next/navigation), garantindo que os anúncios sejam atualizados à medida que o usuário navega pela aplicação. Isso resolve o problema comum de anúncios que não recarregam em SPAs.90
+   4. Carregamento Consciente da Privacidade: A lógica de carregamento do script pode ser encapsulada em uma função que só é executada após o usuário dar consentimento de cookies, garantindo a conformidade com regulamentações como GDPR.94
+
+
+6.2. Monetização Avançada: Header Bidding com Prebid.js
+
+
+Para maximizar a receita, os editores de ponta vão além do Ad Manager e utilizam o Header Bidding.
+
+
+O Próximo Nível de Monetização
+
+
+O Header Bidding é uma técnica programática avançada que realiza um leilão de anúncios no lado do cliente com múltiplos parceiros de demanda (ad exchanges) antes de fazer a chamada para o Google Ad Manager. Isso força o Google a competir em um leilão unificado contra outros players, o que tende a aumentar significativamente os CPMs (custo por mil impressões) e, consequentemente, a receita do editor.7 Prebid.js é a solução de código aberto padrão da indústria para implementar o Header Bidding.
+
+
+Estratégia de Integração de Alto Nível
+
+
+Embora uma implementação completa seja complexa, a arquitetura deve ser projetada para suportá-la.
+   1. Configuração no Google Ad Manager (GAM): No GAM, é necessário configurar Line Items (itens de linha) que visam os pares de chave-valor (key-values) enviados pelo Prebid. A chave mais importante é hb_pb, que representa o "price bucket" (faixa de preço) do lance vencedor.97 O Google está simplificando este processo com os "Yield Groups", que recomendaremos para gerenciar parceiros de Header Bidding.8
+   2. Prebid.js no Next.js: A biblioteca Prebid.js será carregada de forma assíncrona usando o componente <Script> do Next.js.
+   3. Lógica do Leilão: Em um hook personalizado ou dentro do nosso componente AdBanner.tsx, configuraremos os blocos de anúncios e os bidders (parceiros de demanda) do Prebid. Antes que o componente AdBanner solicite um anúncio ao Google, ele primeiro executará o leilão do Prebid. As chaves de segmentação do lance vencedor (incluindo o preço e o ID do criativo) são então passadas para a requisição de anúncio do GPT.
+A inclusão desta arquitetura no guia fornece um roteiro claro para um crescimento significativo da receita, posicionando a aplicação como uma ferramenta de publicação de nível profissional.
+
+
+6.3. Teste A/B de Estratégias de Conteúdo
+
+
+O dashboard não é apenas para visualizar dados; é para agir sobre eles. Utilizaremos nossa plataforma para permitir decisões de conteúdo orientadas por dados, criando um ciclo de feedback virtuoso.98
+
+
+Estrutura para Experimentação
+
+
+   1. Hipótese: O usuário pode formular uma hipótese de conteúdo. Por exemplo: "Títulos de posts que contêm uma pergunta geram 20% mais cliques".
+   2. Geração de Conteúdo: Usando a automação do n8n, o usuário pode gerar dois conjuntos de posts para testar a hipótese (Grupo A: títulos declarativos; Grupo B: títulos interrogativos). Adicionaremos uma coluna test_variant à nossa tabela posts_queue no Supabase para rastrear a qual grupo cada post pertence.
+   3. Rastreamento: Após os posts serem publicados no WordPress, nossa aplicação buscará periodicamente os dados de desempenho (visualizações, comentários, compartilhamentos) através da API REST do WordPress.
+   4. Análise: O dashboard contará com uma visão dedicada de "Teste A/B". Esta visão utilizará nossos gráficos Nivo para exibir o desempenho do Grupo A versus o Grupo B lado a lado. Isso permitirá ao usuário validar ou rejeitar sua hipótese com dados concretos, otimizando continuamente a estratégia de conteúdo com base em evidências, em vez de intuição.101
+________________
+
+
+Parte 7: Produção, Segurança e Monitoramento
+
+
+A fase final garante que a aplicação seja robusta, segura e pronta para implantação em um ambiente de produção.
+
+
+7.1. Reforço de Segurança (Hardening)
+
+
+Além da autenticação e RLS já discutidas, implementaremos camadas adicionais de segurança.
+   * Cabeçalhos de Segurança: Configuraremos o next.config.js para adicionar cabeçalhos de segurança HTTP críticos a todas as respostas. Esta é uma prática fundamental de segurança que ajuda a mitigar uma variedade de ataques.5
+   * Content-Security-Policy (CSP): Implementaremos uma CSP estrita usando o middleware do Next.js para gerar um nonce (um número usado apenas uma vez) para scripts. Isso previne a execução de scripts não autorizados, sendo uma das defesas mais eficazes contra ataques de XSS.104
+   * Proteção CSRF: As Server Actions do Next.js possuem proteção CSRF integrada por padrão. Para quaisquer API Routes que possamos construir (por exemplo, para receber webhooks), que aceitem requisições que alteram o estado de sessões de navegador autenticadas, devemos implementar uma estratégia de token CSRF (como o padrão de cookie de envio duplo).105
+   * Segurança do Banco de Dados: Reiteramos a importância crítica da RLS, senhas de banco de dados fortes e o uso de connection pooling para limitar a exposição direta ao banco de dados e reduzir a superfície de ataque.107 Recomendaremos o uso do modo de transação do Supavisor para quaisquer chamadas de funções serverless, para gerenciar as conexões de forma eficiente e evitar o esgotamento de conexões.108
+
+
+Cabeçalho
+	Valor
+	Explicação
+	X-Content-Type-Options
+	nosniff
+	Impede que o navegador "adivinhe" o tipo de conteúdo de um arquivo, mitigando ataques relacionados à interpretação incorreta de MIME types.
+	Strict-Transport-Security
+	max-age=63072000; includeSubDomains; preload
+	Força a comunicação sobre HTTPS, prevenindo ataques man-in-the-middle.
+	X-Frame-Options
+	DENY
+	Impede que a página seja renderizada dentro de um <iframe> ou <object>, protegendo contra ataques de clickjacking.
+	Permissions-Policy
+	camera=(), microphone=(), geolocation=()
+	Controla quais recursos do navegador a página pode usar. Desabilitar recursos não utilizados por padrão é uma boa prática de segurança.
+	Referrer-Policy
+	origin-when-cross-origin
+	Controla quanta informação de referência (referrer) é enviada em requisições, melhorando a privacidade do usuário.
+	
+
+7.2. Monitoramento e Logging
+
+
+Uma visão unificada do estado de saúde de nossos três sistemas distintos (frontend Next.js, backend Supabase, automação n8n) é essencial para a operação em produção.
+
+
+Logging de Execução do n8n
+
+
+O logging padrão do n8n em SQLite não é adequado para produção ou análise externa. A melhor prática é configurar o n8n para registrar seus dados de execução em um banco de dados externo. A solução mais elegante para o nosso caso é configurar a instância do n8n para usar nosso banco de dados Supabase (Postgres) existente como seu banco de dados operacional. Isso pode ser feito criando um esquema dedicado dentro do Supabase para o n8n e fornecendo a string de conexão nas variáveis de ambiente do n8n. Esta abordagem co-localiza os dados da nossa aplicação e os logs de execução do fluxo de trabalho, tornando trivial a consulta e a construção de painéis a partir de uma única fonte de dados.109 Para um logging mais granular e em tempo real, as versões Enterprise do n8n oferecem streaming de logs para um webhook genérico 110, que poderia ser recebido por uma API Route em nossa aplicação Next.js.
+
+
+Monitoramento da Aplicação Next.js
+
+
+A Vercel oferece excelentes ferramentas de logging e análise prontas para uso.111 Para obter insights mais profundos e rastreamento de erros, recomendaremos a integração de um serviço de terceiros como Sentry, Axiom ou Highlight.io, que possuem integrações robustas com o Next.js e podem correlacionar erros de frontend e backend.113
+
+
+Monitoramento da Saúde do Supabase
+
+
+O Supabase expõe um endpoint de métricas compatível com o Prometheus.115 Instruiremos o usuário sobre como configurar o monitoramento e o alerta usando uma ferramenta como o Grafana Cloud. O Grafana pode "raspar" (scrape) este endpoint em intervalos regulares e alertar sobre problemas como alta utilização da CPU, performance lenta de queries ou baixo espaço em disco, permitindo uma resposta proativa a possíveis problemas de infraestrutura.116
+
+
+7.3. Implantação na Vercel
+
+
+A Vercel é a plataforma ideal para hospedar aplicações Next.js, pois é desenvolvida pela mesma equipe e oferece integrações perfeitas.
+   * Conectando o Repositório: O processo começa conectando o repositório Git a um novo projeto na Vercel.
+   * Configuração:
+   * Framework Preset: Next.js.
+   * Root Directory: A raiz do projeto. A Vercel detectará automaticamente a aplicação Next.js.
+   * Variáveis de Ambiente: Este é o passo mais crítico e a causa mais comum de falhas na implantação. Todas as variáveis do arquivo .env.local devem ser adicionadas de forma segura às configurações de variáveis de ambiente do projeto na Vercel. É vital especificar para quais ambientes (Produção, Pré-visualização, Desenvolvimento) cada variável se aplica.45
+   * Restrições de Rede do Supabase: Como uma etapa final de segurança para a produção, instruiremos o usuário a configurar as Restrições de Rede no painel do Supabase. Isso permite criar uma lista de permissões de endereços IP, restringindo o acesso ao banco de dados apenas ao tráfego vindo da infraestrutura da Vercel, adicionando uma camada crucial de segurança na rede.
+________________
+
+
+Conclusão
+
+
+
+
+Resumo das Capacidades
+
+
+Seguindo este guia, o resultado não será apenas um "frontend", mas sim um hub de publicação estratégico, seguro e escalável. Arquitetamos uma plataforma que oferece:
+   * Controle Total: Uma interface de gerenciamento completa para um pipeline de conteúdo automatizado.
+   * Análise Profunda: Dashboards com métricas, gráficos interativos e ferramentas de análise de conteúdo baseadas em dados e NLP.
+   * Monetização Avançada: Uma base sólida para maximizar a receita de publicidade, pronta para integrar AdSense, Ad Manager e Header Bidding, com otimizações para os Core Web Vitals.
+   * Segurança Robusta: Múltiplas camadas de segurança, desde a autenticação e RLS no nível do banco de dados até cabeçalhos de segurança e CSP no nível da aplicação.
+   * Estética Única: Uma UI moderna e performática que evoca a nostálgica e otimista estética Frutiger Aero.
+
+
+Escalabilidade Futura
+
+
+A arquitetura foi projetada para crescer. As futuras considerações de escalabilidade incluem:
+   * Escalando o n8n: Para lidar com um volume muito alto de execuções de fluxo de trabalho, o n8n pode ser configurado em "queue mode" com nós de trabalho (workers) dedicados, que podem ser escalados horizontalmente de forma independente da instância principal.118
+   * Otimização do Banco de Dados: À medida que as tabelas de log e de posts crescem, estratégias avançadas de banco de dados, como o particionamento de tabelas (por exemplo, por data) e a criação de índices mais especializados (como BRIN para grandes tabelas ordenadas), podem ser implementadas para manter a performance das consultas.120
+Esta plataforma está agora preparada não apenas para atender às necessidades atuais, mas também para evoluir e se adaptar aos desafios e oportunidades do futuro no dinâmico mundo da publicação digital.
+Referências citadas
+   1. Master Core Web Vitals in React: Tips & Demos - Mindbowser, acessado em junho 27, 2025, https://www.mindbowser.com/master-core-web-vitals-react/
+   2. Core Web Vitals in React.js: A Complete Guide | by Prateek Singh - Medium, acessado em junho 27, 2025, https://medium.com/@prateekchadha15/core-web-vitals-in-react-js-a-complete-guide-f814eb794367
+   3. The Hidden Fortress: Why Data Security in Supabase Matters | by Mobterest Studio, acessado em junho 27, 2025, https://mobterest.medium.com/the-hidden-fortress-why-data-security-in-supabase-matters-d22109ee43d4
+   4. Best Security Practices in Supabase: A Comprehensive Guide - Supadex, acessado em junho 27, 2025, https://www.supadex.app/blog/best-security-practices-in-supabase-a-comprehensive-guide
+   5. next.config.js Options: headers, acessado em junho 27, 2025, https://nextjs.org/docs/pages/api-reference/config/next-config-js/headers
+   6. Optimizing Performance in Next.js and React.js: Best Practices and Strategies, acessado em junho 27, 2025, https://dev.to/bhargab/optimizing-performance-in-nextjs-and-reactjs-best-practices-and-strategies-1j2a
+   7. Header bidding trafficking - Google Ad Manager Help, acessado em junho 27, 2025, https://support.google.com/admanager/answer/12273163?hl=en
+   8. A Bridge to Prebid – Header Bidding in Google Ad Manager (GAM) - Setupad.com, acessado em junho 27, 2025, https://setupad.com/blog/prebid-in-gam/
+   9. Frutiger Aero - Wikipedia, acessado em junho 27, 2025, https://en.wikipedia.org/wiki/Frutiger_Aero
+   10. Frutiger Aero: A Journey Through the Rise, Reign, and Resurgence of a - Vapor95, acessado em junho 27, 2025, https://vapor95.com/blogs/darknet/frutiger-aero-a-nostalgic-journey-through-the-rise-reign-and-resurgence-of-a-unique-design-aesthetic
+   11. I Built Glass Effect like Apple's with Tailwind CSS in Minutes - YouTube, acessado em junho 27, 2025, https://www.youtube.com/watch?v=PfKfeUB0UgI
+   12. backdrop-filter: blur() - Tailwind CSS, acessado em junho 27, 2025, https://tailwindcss.com/docs/backdrop-filter-blur
+   13. Creating Glassmorphism Effects with Tailwind CSS | Epic Web Dev, acessado em junho 27, 2025, https://www.epicweb.dev/tips/creating-glassmorphism-effects-with-tailwind-css
+   14. Shiny Button Component — Framer Resource, acessado em junho 27, 2025, https://framer.university/resources/shiny-button-component
+   15. Implementing Atomic Design in Next.js Projects | by Ijlal Windhi | Medium, acessado em junho 27, 2025, https://ijlalwindhi.medium.com/implementing-atomic-design-in-next-js-projects-9d7e5bbcece4
+   16. ijlalwindhi.medium.com, acessado em junho 27, 2025, https://ijlalwindhi.medium.com/implementing-atomic-design-in-next-js-projects-9d7e5bbcece4#:~:text=Applying%20Atomic%20Design%20principles%20in,js%20application.
+   17. Rethinking Atomic Design in React Projects - Cheesecake Labs, acessado em junho 27, 2025, https://cheesecakelabs.com/blog/rethinking-atomic-design-react-projects/
+   18. Is Atomic Design really practical for big projects ?? : r/reactjs - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/reactjs/comments/ujuxj2/is_atomic_design_really_practical_for_big_projects/
+   19. Atomic design : r/reactjs - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/reactjs/comments/14bplor/atomic_design/
+   20. Mastering Next.js App Router: Best Practices for Structuring Your Application, acessado em junho 27, 2025, https://thiraphat-ps-dev.medium.com/mastering-next-js-app-router-best-practices-for-structuring-your-application-3f8cf0c76580
+   21. Best architecture setup for a highly scalable, complex app using Next.js 15 (App Router + React)? : r/nextjs - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/nextjs/comments/1k0hssv/best_architecture_setup_for_a_highly_scalable/
+   22. Top 10 Pre-Built React Frontend UI Libraries for 2025 – Blog - Supernova, acessado em junho 27, 2025, https://www.supernova.io/blog/top-10-pre-built-react-frontend-ui-libraries-for-2025
+   23. Best React component libraries in 2025? Need recommendations : r/nextjs - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/nextjs/comments/1lkvlpl/best_react_component_libraries_in_2025_need/
+   24. App Router: Getting Started - Next.js, acessado em junho 27, 2025, https://nextjs.org/docs/app/getting-started
+   25. The State of React and the Community in 2025 - Mark's Dev Blog, acessado em junho 27, 2025, https://blog.isquaredsoftware.com/2025/06/react-community-2025/
+   26. Styling with utility classes - Core concepts - Tailwind CSS, acessado em junho 27, 2025, https://tailwindcss.com/docs/styling-with-utility-classes
+   27. 5 Top UI Component Libraries for React in 2025 | UI Bakery Blog, acessado em junho 27, 2025, https://uibakery.io/blog/ui-component-libraries-for-react
+   28. Building a Modern UI Kit with Tailwind, ShadCN, and Framer Motion | by Zar Nabi | Medium, acessado em junho 27, 2025, https://medium.com/@colorsong.nabi/building-a-modern-ui-kit-with-tailwind-shadcn-and-framer-motion-f162f6695ce5
+   29. Using React Query with Next.js App Router and Supabase Cache Helpers, acessado em junho 27, 2025, https://supabase.com/blog/react-query-nextjs-app-router-cache-helpers
+   30. Using TanStack Query with Next.js - LogRocket Blog, acessado em junho 27, 2025, https://blog.logrocket.com/using-tanstack-query-next-js/
+   31. Top 10 React Libraries to Use in 2025 - Strapi, acessado em junho 27, 2025, https://strapi.io/blog/top-react-libraries
+   32. Top 15 React state management libraries to use in 2025. - Nimblechapps, acessado em junho 27, 2025, https://www.nimblechapps.com/blog/15-react-state-management-libraries-to-use-in-2025
+   33. Modern React State Management in 2025: A Practical Guide - DEV Community, acessado em junho 27, 2025, https://dev.to/joodi/modern-react-state-management-in-2025-a-practical-guide-2j8f
+   34. Zustand + react query : r/reactjs - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/reactjs/comments/1fswsw8/zustand_react_query/
+   35. Do we need to use zustand along with react query : r/reactnative - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/reactnative/comments/1cu1d8c/do_we_need_to_use_zustand_along_with_react_query/
+   36. Zustand + React Query: A New Approach to State Management | by Freeyeon | Medium, acessado em junho 27, 2025, https://medium.com/@freeyeon96/zustand-react-query-new-state-management-7aad6090af56
+   37. Top React Chart Libraries for 2025 - UPDOT, acessado em junho 27, 2025, https://www.updot.co/insights/best-react-chart-libraries
+   38. Best React chart libraries (2025 update): Features, performance & use cases, acessado em junho 27, 2025, https://blog.logrocket.com/best-react-chart-libraries-2025/
+   39. Top 10 Best React Table Libraries In 2025 (Updated) - InApps Technology, acessado em junho 27, 2025, https://www.inapps.net/top-10-react-table-libraries/
+   40. Getting Started / Installation - Page ⋅ Storybook, acessado em junho 27, 2025, https://react-table-library.com/
+   41. Server Side Pagination, Column Filtering and Sorting With TanStack Table and Query Library. | by chiazhe | Medium, acessado em junho 27, 2025, https://medium.com/@clee080/how-to-do-server-side-pagination-column-filtering-and-sorting-with-tanstack-react-table-and-react-7400a5604ff2
+   42. rjsf-team/react-jsonschema-form: A React component for ... - GitHub, acessado em junho 27, 2025, https://github.com/rjsf-team/react-jsonschema-form
+   43. Building Dynamic Forms in React with JSON Schema and Material-UI - Codup, acessado em junho 27, 2025, https://codup.co/blog/building-dynamic-forms-in-react-with-json-schema-and-material-ui/
+   44. Simplest way to build Dashboard (Next.js 15, Shadcn, TypeScript) - YouTube, acessado em junho 27, 2025, https://www.youtube.com/watch?v=lG_mTu0wyZA
+   45. Deploy Next.js Supabase to Vercel - Makerkit, acessado em junho 27, 2025, https://makerkit.dev/docs/next-supabase-turbo/going-to-production/vercel
+   46. How to set up continuous deployment with Supabase and Vercel? - Bootstrapped, acessado em junho 27, 2025, https://bootstrapped.app/guide/how-to-set-up-continuous-deployment-with-supabase-and-vercel
+   47. Implementing Authentication in Next.js with Supabase: A Complete Guide | Techstaunch, acessado em junho 27, 2025, https://techstaunch.com/blogs/implementing-authentication-in-next-js-with-supabase?tech_blog=true
+   48. Next.js Enterprise Boilerplate - Vercel, acessado em junho 27, 2025, https://vercel.com/new/creatize/templates/next.js/nextjs-enterprise-boilerplate
+   49. Build a User Management App with Next.js | Supabase Docs, acessado em junho 27, 2025, https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs
+   50. How to Set Up Supabase Auth in Next.js (2025 Guide) - Zestminds, acessado em junho 27, 2025, https://www.zestminds.com/blog/supabase-auth-nextjs-setup-guide/
+   51. Using Next.js Server Actions to Call External APIs - Auth0, acessado em junho 27, 2025, https://auth0.com/blog/using-nextjs-server-actions-to-call-external-apis/
+   52. Guides: Authentication - Next.js, acessado em junho 27, 2025, https://nextjs.org/docs/app/guides/authentication
+   53. server-side auth in Supabase with Next.js -- how to handle session - Stack Overflow, acessado em junho 27, 2025, https://stackoverflow.com/questions/79021473/server-side-auth-in-supabase-with-next-js-how-to-handle-session
+   54. Best Practices for Managing User Auth and Data in Supabase? - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/Supabase/comments/1iziebu/best_practices_for_managing_user_auth_and_data_in/
+   55. Securing a nextjs api with supabase auth - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/Supabase/comments/125cwjl/securing_a_nextjs_api_with_supabase_auth/
+   56. WordPress Application Passwords: Creating & Troubleshooting - Melapress, acessado em junho 27, 2025, https://melapress.com/wordpress-application-passwords/
+   57. Application Passwords: Integration Guide – Make WordPress Core, acessado em junho 27, 2025, https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/
+   58. Application Passwords authentication via REST API - GitHub, acessado em junho 27, 2025, https://github.com/wpmarketingteam/WP5.6Marcomms/blob/master/Questions%20and%20Answers/4_application_password_authentication.md
+   59. Mastering the WordPress REST API: Build Dynamic Sites in 2025 - Interserver Tips, acessado em junho 27, 2025, https://www.interserver.net/tips/kb/mastering-the-wordpress-rest-api-build-dynamic-sites-in-2025/
+   60. Animated Shiny Pill in Framer, acessado em junho 27, 2025, https://framer.university/resources/animated-shiny-pill-in-framer
+   61. ui-neumorphism - Ankit Kumar Pandit, acessado em junho 27, 2025, https://akaspanion.github.io/ui-neumorphism/
+   62. Free download: Flat / Skeuomorphic UI kit - Web Designer Depot, acessado em junho 27, 2025, https://webdesignerdepot.com/free-download-flat-skeuomorphic-ui-kit/
+   63. Frutiger Aero: Iconic Design Examples from the Mid-2000s, acessado em junho 27, 2025, https://www.markhendriksen.com/frutiger-aero/
+   64. Shiny Button in 30 seconds or less with Framer - YouTube, acessado em junho 27, 2025, https://www.youtube.com/shorts/p08ErGHIbhU
+   65. Glass material with TailwindCSS in under 3 minutes - YouTube, acessado em junho 27, 2025, https://www.youtube.com/watch?v=fcMykBYmFwY&pp=0gcJCfwAo7VqN5tD
+   66. Getting Started: Server and Client Components - Next.js, acessado em junho 27, 2025, https://nextjs.org/docs/app/getting-started/server-and-client-components
+   67. From Setup to Execution: The Most Accurate TanStack Query and Next.js 14+ Integration Guide - FAUN — Developer Community, acessado em junho 27, 2025, https://faun.pub/from-setup-to-execution-the-most-accurate-tanstack-query-and-next-js-14-integration-guide-8e5aff6ee8ba
+   68. React Charts - MUI X, acessado em junho 27, 2025, https://mui.com/x/react-charts/
+   69. 15 Best React JS Chart Libraries in 2025 - Technostacks, acessado em junho 27, 2025, https://technostacks.com/blog/react-chart-libraries/
+   70. Is there any reason to use Tanstack Table if all filtering/sorting/pagination is done server side? : r/reactjs - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/reactjs/comments/1iyr5de/is_there_any_reason_to_use_tanstack_table_if_all/
+   71. Sorting Guide | TanStack Table Docs, acessado em junho 27, 2025, https://tanstack.com/table/v8/docs/guide/sorting
+   72. Pagination Guide | TanStack Table Docs, acessado em junho 27, 2025, https://tanstack.com/table/v8/docs/guide/pagination
+   73. Column Filtering Guide | TanStack Table Docs, acessado em junho 27, 2025, https://tanstack.com/table/v8/docs/guide/column-filtering
+   74. Subscribing to Database Changes | Supabase Docs, acessado em junho 27, 2025, https://supabase.com/docs/guides/realtime/subscribing-to-database-changes
+   75. Real-time Table Changes in Supabase with React.js/Next.js | by Niall Maher | Codú, acessado em junho 27, 2025, https://www.codu.co/articles/real-time-table-changes-in-supabase-with-react-js-next-js-swmgqmq9
+   76. JavaScript: Call a Postgres function | Supabase Docs, acessado em junho 27, 2025, https://supabase.com/docs/reference/javascript/rpc
+   77. JavaScript: Call a Postgres function | Supabase Docs, acessado em junho 27, 2025, https://supabase.com/docs/reference/javascript/v1/rpc
+   78. Call Postgres functions from JavaScript with RPC - YouTube, acessado em junho 27, 2025, https://www.youtube.com/watch?v=I6nnp9AINJk
+   79. Database Functions | Supabase Docs, acessado em junho 27, 2025, https://supabase.com/docs/guides/database/functions
+   80. winkjs/wink-nlp: Developer friendly Natural Language Processing - GitHub, acessado em junho 27, 2025, https://github.com/winkjs/wink-nlp
+   81. NLP with Javascript Using winkJS - Rotational Labs, acessado em junho 27, 2025, https://rotational.io/blog/nlp-with-javascript-using-winkjs/
+   82. Building APIs with Next.js, acessado em junho 27, 2025, https://nextjs.org/blog/building-apis-with-nextjs
+   83. Backend-for-Frontend (BFF) Architecture with Server Actions - ProNextJS, acessado em junho 27, 2025, https://www.pronextjs.dev/workshops/next-js-react-server-component-rsc-architecture-jbvxk/backend-for-frontend-bff-architecture-with-server-actions-fcoc0
+   84. The Backend-for-Frontend pattern using NextJS A Step-by-Step Guide - WunderGraph, acessado em junho 27, 2025, https://wundergraph.com/blog/the-backend-for-frontend-pattern-using-nextjs
+   85. Keyword reports - Semrush Developers, acessado em junho 27, 2025, https://developer.semrush.com/api/v3/analytics/keyword-reports/
+   86. @react-formgen/json-schema - npm, acessado em junho 27, 2025, https://www.npmjs.com/package/@react-formgen/json-schema
+   87. Advanced customization - react-jsonschema-form documentation, acessado em junho 27, 2025, https://react-jsonschema-form.readthedocs.io/en/v1.8.1/advanced-customization/
+   88. Custom Templates - react-jsonschema-form documentation, acessado em junho 27, 2025, https://react-jsonschema-form.readthedocs.io/en/v4.2.2/advanced-customization/custom-templates/
+   89. Custom Widgets and Fields | react-jsonschema-form - GitHub Pages, acessado em junho 27, 2025, https://rjsf-team.github.io/react-jsonschema-form/docs/advanced-customization/custom-widgets-fields/
+   90. Implementing Google Publisher Tag Ads in Next.js 15 Single Page Application 2025, acessado em junho 27, 2025, https://dev.to/muhammadazfaraslam/implementing-google-publisher-tag-ads-in-nextjs-15-single-page-application-2025-3kof
+   91. Google AdSense in nextjs 14 nextjs 15 - Help - Vercel Community, acessado em junho 27, 2025, https://community.vercel.com/t/google-adsense-in-nextjs-14-nextjs-15/4340
+   92. How to implement Google Adsense on App Router (Next.js) | by Kamo Tomoki - Medium, acessado em junho 27, 2025, https://medium.com/@kamotomo/how-to-implement-google-adsense-on-app-router-next-js-98dd568e087a
+   93. How to Optimize or Improve Google Page Speed in Next.js? - Swhabitation, acessado em junho 27, 2025, https://www.swhabitation.com/blogs/how-to-improve-google-page-speed-in-nextjs
+   94. How to add Google Adsense to Next.js applications - Max Dietrich, acessado em junho 27, 2025, https://mxd.codes/articles/how-to-add-google-adsense-to-next-js-applications
+   95. advertisement server - Header Bidding In adserver - Stack Overflow, acessado em junho 27, 2025, https://stackoverflow.com/questions/44919089/header-bidding-in-adserver
+   96. Improved header bidding support in Google Ad Manager, acessado em junho 27, 2025, https://blog.google/products/admanager/improved-header-bidding-support-in-google-ad-manager/
+   97. Google Ad Manager with Prebid Step by Step, acessado em junho 27, 2025, https://docs.prebid.org/adops/step-by-step.html
+   98. 9 Ways to Create a Data-Driven Content Marketing Strategy - Omniscient Digital, acessado em junho 27, 2025, https://beomniscient.com/blog/data-driven-content-marketing-strategy/
+   99. How to Develop a Data-Driven Content Strategy | 5W PR Agency Blog, acessado em junho 27, 2025, https://www.5wpr.com/new/how-to-develop-a-data-driven-content-strategy/
+   100. How to Properly Plan and Execute a Data-Driven Content Strategy - Zero Gravity Marketing, acessado em junho 27, 2025, https://zerogravitymarketing.com/blog/plan-and-execute-a-data-driven-content-strategy/
+   101. Data-Driven Content Strategies: Why They Matter and How to Build One - Aprimo, acessado em junho 27, 2025, https://www.aprimo.com/data-driven-content-strategies-why-they-matter-and-how-to-build-one
+   102. Next.js Security Headers - GeeksforGeeks, acessado em junho 27, 2025, https://www.geeksforgeeks.org/next-js-security-headers/
+   103. Adding Security Headers to a Next.js Application - Alvin Wanjala, acessado em junho 27, 2025, https://alvinwanjala.com/blog/adding-security-headers-nextjs/
+   104. How to set a Content Security Policy (CSP) for your Next.js application, acessado em junho 27, 2025, https://nextjs.org/docs/app/guides/content-security-policy
+   105. CSRF Protection for your API Routes - Makerkit, acessado em junho 27, 2025, https://makerkit.dev/docs/next-supabase-turbo/data-fetching/csrf-protection
+   106. 3 Techniques For Better Protecting Against NextJS CSRF Attacks - Alerty, acessado em junho 27, 2025, https://alerty.ai/blog/nextjs-csrf
+   107. Shared Responsibility Model | Supabase Docs, acessado em junho 27, 2025, https://supabase.com/docs/guides/deployment/shared-responsibility-model
+   108. Connect to your database | Supabase Docs, acessado em junho 27, 2025, https://supabase.com/docs/guides/database/connecting-to-postgres
+   109. Security automation using n8n and logstash | by Ionut Dumitru Gumeni - Medium, acessado em junho 27, 2025, https://medium.com/@igumeni/security-automation-using-logstash-and-n8n-9f08b6dd5b2b
+   110. Log streaming - n8n Docs, acessado em junho 27, 2025, https://docs.n8n.io/log-streaming/
+   111. Next.js on Vercel, acessado em junho 27, 2025, https://vercel.com/docs/frameworks/nextjs
+   112. How to Manage Logging for Next.js Hosted on Vercel - Wisp CMS, acessado em junho 27, 2025, https://www.wisp.blog/blog/how-to-manage-logging-for-nextjs-hosted-on-vercel
+   113. How are you monitoring your nextjs application (particularly solo engineers) - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/nextjs/comments/1aker38/how_are_you_monitoring_your_nextjs_application/
+   114. Best alerting/monitoring for Next · vercel next.js · Discussion #63772 - GitHub, acessado em junho 27, 2025, https://github.com/vercel/next.js/discussions/63772
+   115. Metrics | Supabase Docs, acessado em junho 27, 2025, https://supabase.com/docs/guides/telemetry/metrics
+   116. How to set up monitoring and alerting for Supabase? - Bootstrapped, acessado em junho 27, 2025, https://bootstrapped.app/guide/how-to-set-up-monitoring-and-alerting-for-supabase
+   117. Build and deploy a Next.js app with Vercel and Supabase - Paddle Developer, acessado em junho 27, 2025, https://developer.paddle.com/build/nextjs-supabase-vercel-starter-kit
+   118. Scaling n8n with Queue Mode on Kubernetes: Worker Deployment Guide, acessado em junho 27, 2025, https://nikhilmishra.live/scaling-n8n-with-queue-mode-on-kubernetes-worker-deployment-guide
+   119. I made a docker compose for n8n queue mode with autoscaling - simple install and configuration. Run hundreds of executions simultaneously. Link to GitHub in post. - Reddit, acessado em junho 27, 2025, https://www.reddit.com/r/n8n/comments/1kgxgo4/i_made_a_docker_compose_for_n8n_queue_mode_with/
+   120. PostgreSQL Index Best Practices for Faster Queries - Mydbops, acessado em junho 27, 2025, https://www.mydbops.com/blog/postgresql-indexing-best-practices-guide
+   121. PostgreSQL （Query Optimization and Table Partitioning） | by Dylan Wang | Medium, acessado em junho 27, 2025, https://medium.com/@chnwsw01/postgresql-query-optimization-and-table-partitioning-21f19e9d2a3a
