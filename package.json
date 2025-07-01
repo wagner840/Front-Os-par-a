@@ -5,13 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node .next/standalone/server.js",
+    "start:production": "bash scripts/start-production.sh",
+    "start:next": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "build:analyze": "cross-env ANALYZE=true next build",
     "build:production": "npm run type-check && npm run lint && npm run build",
     "deploy:vercel": "vercel --prod",
     "deploy:preview": "vercel",
+    "debug:env": "node scripts/debug-env.js",
     "postbuild": "next-sitemap"
   },
   "dependencies": {
