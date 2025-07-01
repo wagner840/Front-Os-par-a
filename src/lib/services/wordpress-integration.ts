@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/client";
+import { getWordPressConfigByBlogId } from "../wordpress/config";
 import type {
   WordPressConfig,
   WordPressPost,
@@ -28,6 +29,14 @@ export class WordPressIntegrationService {
 
   async getWordPressConfig(blogId: string): Promise<WordPressConfig | null> {
     try {
+      // 🚀 PRIORIDADE 1: Variáveis de ambiente (Coolify/Docker)
+      const envConfig = getWordPressConfigByBlogId(blogId);
+      if (envConfig) {
+        console.log(`📡 Using environment config for blog ${blogId}`);
+        return envConfig;
+      }
+
+      // 🚀 PRIORIDADE 2: Configuração salva no banco (sistema atual)
       const { data, error } = await this.supabase
         .from("blogs")
         .select("settings")
@@ -37,8 +46,12 @@ export class WordPressIntegrationService {
       if (error) throw error;
 
       const wpConfig = data?.settings?.wordpress;
-      if (!wpConfig) return null;
+      if (!wpConfig) {
+        console.log(`⚠️ No WordPress config found for blog ${blogId}`);
+        return null;
+      }
 
+      console.log(`💾 Using database config for blog ${blogId}`);
       return {
         base_url: wpConfig.base_url,
         username: wpConfig.username,
